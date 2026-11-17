@@ -10,25 +10,34 @@ struct DeckView: View {
     @State private var muted = true
 
     var body: some View {
-        GeometryReader { geo in
-            let size = CGSize(width: geo.size.width * scale, height: geo.size.height * scale)
-            let cards = library.upcoming(3)
-            ZStack {
-                Color.clear
-                if cards.isEmpty {
-                    finished
-                } else {
-                    ForEach(Array(cards.prefix(2).enumerated().reversed()), id: \.element.localIdentifier) { i, asset in
-                        card(asset, top: i == 0, size: size)
+        VStack(spacing: 12) {
+            GeometryReader { geo in
+                let size = CGSize(width: geo.size.width * scale, height: geo.size.height * scale)
+                let ready = library.openID == source.id
+                let cards = ready ? library.upcoming(3) : []
+                ZStack {
+                    Color.clear
+                    if !ready {
+                        ProgressView()
+                    } else if cards.isEmpty {
+                        finished
+                    } else {
+                        ForEach(Array(cards.prefix(2).enumerated().reversed()), id: \.element.localIdentifier) { i, asset in
+                            card(asset, top: i == 0, size: size)
+                        }
                     }
                 }
+                .contentShape(Rectangle())
+                .onTapGesture { if ready && !flying { library.undo() } }
+                .onChange(of: cards.map(\.localIdentifier), initial: true) {
+                    library.images.stopCachingImagesForAllAssets()
+                    library.images.startCachingImages(for: Array(cards.dropFirst()), targetSize: size,
+                                                      contentMode: .aspectFit, options: AssetImage.options)
+                }
             }
-            .contentShape(Rectangle())
-            .onTapGesture { if !flying { library.undo() } }
-            .onChange(of: cards.map(\.localIdentifier), initial: true) {
-                library.images.startCachingImages(for: Array(cards.dropFirst()), targetSize: size,
-                                                  contentMode: .aspectFit, options: AssetImage.options)
-            }
+            Text("Swipe left to delete, right to keep. Tap to undo.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
         }
         .padding()
         .navigationTitle(source.title)
@@ -82,12 +91,14 @@ struct DeckView: View {
             .onChanged { if !flying { offset = $0.translation } }
             .onEnded { value in
                 guard !flying else { return }
-                let x = value.predictedEndTranslation.width
-                guard abs(x) > 150 || abs(value.translation.width) > 120 else {
+                let moved = value.translation.width
+                let predicted = value.predictedEndTranslation.width
+                let far = abs(moved) > 120 || abs(predicted) > 150
+                guard far && moved != 0 && (moved > 0) == (predicted > 0) else {
                     withAnimation(.spring) { offset = .zero }
                     return
                 }
-                let keep = x > 0
+                let keep = moved > 0
                 flying = true
                 withAnimation(.easeIn(duration: 0.2)) {
                     offset = CGSize(width: keep ? 800 : -800, height: value.translation.height)
@@ -103,8 +114,8 @@ struct DeckView: View {
         VStack(spacing: 16) {
             Image(systemName: "checkmark.circle").font(.system(size: 56)).foregroundStyle(.tint)
             Text("All sorted").font(.title2.bold())
-            Text("Tap anywhere to undo.").foregroundStyle(.secondary)
             DeleteButton(reopen: source, prominent: true)
+            Button("Start Over") { library.startOver() }
         }
     }
 }

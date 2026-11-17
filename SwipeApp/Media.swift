@@ -80,6 +80,7 @@ struct LoopingVideo: View {
         ZStack {
             if let player = video.player {
                 PlayerLayer(player: player)
+                    .allowsHitTesting(false)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -18,10 +18,12 @@ struct Decision: Codable {
 final class Library {
     var status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
     var sources: [Source] = []
+    var deleteError: String?
     private(set) var stack: [Decision] = []
     private(set) var isDeleting = false
 
-    private(set) var assets: PHFetchResult<PHAsset>?
+    private(set) var openID: String?
+    private var assets: PHFetchResult<PHAsset>?
     private var ids: [String] = []
     private var index: [String: Int] = [:]
     private var decided: Set<String> = []
@@ -29,10 +31,13 @@ final class Library {
     private(set) var remaining = 0
 
     let images = PHCachingImageManager()
-    private static let key = "decisions"
+
+    private static var file: URL {
+        URL.applicationSupportDirectory.appending(path: "decisions.json")
+    }
 
     init() {
-        if let data = UserDefaults.standard.data(forKey: Self.key),
+        if let data = try? Data(contentsOf: Self.file),
            let saved = try? JSONDecoder().decode([Decision].self, from: data) {
             stack = saved
             decided = Set(saved.map(\.id))
@@ -96,6 +101,7 @@ final class Library {
         index = Dictionary(newIDs.enumerated().map { ($1, $0) }, uniquingKeysWith: { first, _ in first })
         remaining = newIDs.filter { !decided.contains($0) }.count
         cursor = 0
+        openID = source.id
         advance()
     }
 
@@ -116,7 +122,6 @@ final class Library {
         decided.insert(asset.localIdentifier)
         remaining -= 1
         advance()
-        save()
     }
 
     func undo() {
@@ -126,6 +131,15 @@ final class Library {
         stack.remove(at: last)
         remaining += 1
         cursor = min(cursor, position)
+    }
+
+    func startOver() {
+        let cleared = Set(stack.filter { !$0.delete && index[$0.id] != nil }.map(\.id))
+        stack.removeAll { cleared.contains($0.id) }
+        decided.subtract(cleared)
+        remaining += cleared.count
+        cursor = 0
+        advance()
         save()
     }
 
@@ -135,13 +149,21 @@ final class Library {
         guard !ids.isEmpty else { return }
         isDeleting = true
         defer { isDeleting = false }
-        let doomed = PHAsset.fetchAssets(withLocalIdentifiers: ids, options: nil)
-        if doomed.count > 0 {
+        var deletable: [PHAsset] = []
+        PHAsset.fetchAssets(withLocalIdentifiers: ids, options: nil).enumerateObjects { asset, _, _ in
+            if asset.canPerform(.delete) { deletable.append(asset) }
+        }
+        if !deletable.isEmpty {
+            let request = deletable as NSArray
             do {
                 try await PHPhotoLibrary.shared().performChanges {
-                    PHAssetChangeRequest.deleteAssets(doomed)
+                    PHAssetChangeRequest.deleteAssets(request)
                 }
             } catch {
+                let error = error as NSError
+                if !(error.domain == PHPhotosErrorDomain && error.code == PHPhotosError.Code.userCancelled.rawValue) {
+                    deleteError = error.localizedDescription
+                }
                 return
             }
         }
@@ -153,13 +175,14 @@ final class Library {
         if let reopen { open(reopen) }
     }
 
-    private func advance() {
-        while cursor < ids.count && decided.contains(ids[cursor]) { cursor += 1 }
+    func save() {
+        guard let data = try? JSONEncoder().encode(stack) else { return }
+        try? FileManager.default.createDirectory(at: URL.applicationSupportDirectory,
+                                                 withIntermediateDirectories: true)
+        try? data.write(to: Self.file, options: .atomic)
     }
 
-    private func save() {
-        if let data = try? JSONEncoder().encode(stack) {
-            UserDefaults.standard.set(data, forKey: Self.key)
-        }
+    private func advance() {
+        while cursor < ids.count && decided.contains(ids[cursor]) { cursor += 1 }
     }
 }
