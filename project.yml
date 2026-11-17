@@ -1,5 +1,5 @@
 # App identity lives here only: PRODUCT_BUNDLE_IDENTIFIER, APP_DISPLAY_NAME, MARKETING_VERSION.
-# ${APPLE_TEAM_ID}, ${APP_PROFILE_NAME} and ${BUILD_NUMBER} are expanded by XcodeGen from the CI environment.
+# ${SIGN_IDENTITY}, ${APPLE_TEAM_ID}, ${APP_PROFILE_NAME} and ${BUILD_NUMBER} are expanded by XcodeGen from the CI environment.
 name: Sift
 options:
   deploymentTarget:
@@ -10,7 +10,7 @@ settings:
     SWIFT_VERSION: "5.0"
     TARGETED_DEVICE_FAMILY: "1"
     CODE_SIGN_STYLE: Manual
-    CODE_SIGN_IDENTITY: "Apple Distribution"
+    CODE_SIGN_IDENTITY: "${SIGN_IDENTITY}"
     DEVELOPMENT_TEAM: "${APPLE_TEAM_ID}"
     MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "${BUILD_NUMBER}"
@@ -30,7 +30,7 @@ targets:
         INFOPLIST_FILE: Support/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         TARGETED_DEVICE_FAMILY: "1"
-        CODE_SIGN_IDENTITY: "Apple Distribution"
+        CODE_SIGN_IDENTITY: "${SIGN_IDENTITY}"
         PROVISIONING_PROFILE_SPECIFIER: "${APP_PROFILE_NAME}"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor

@@ -8,6 +8,8 @@ jobs:
   release:
     runs-on: macos-26
     timeout-minutes: 60
+    env:
+      SIGN_IDENTITY: Apple Distribution
     steps:
       - uses: actions/checkout@v7
 
