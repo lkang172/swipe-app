@@ -1,4 +1,4 @@
-# SwipeApp
+# Sift
 
 Free iOS photo cleanup: swipe right to keep, left to delete, tap to undo. Deletes are queued and committed together with one confirmation.
 

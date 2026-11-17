@@ -27,8 +27,8 @@ jobs:
         run: |
           brew install xcodegen
           xcodegen generate --spec project.yml
-          grep -nE 'DEVELOPMENT_TEAM|PROVISIONING_PROFILE_SPECIFIER|CURRENT_PROJECT_VERSION' SwipeApp.xcodeproj/project.pbxproj || true
-          if grep -n '\${' SwipeApp.xcodeproj/project.pbxproj; then
+          grep -nE 'DEVELOPMENT_TEAM|PROVISIONING_PROFILE_SPECIFIER|CURRENT_PROJECT_VERSION' Sift.xcodeproj/project.pbxproj || true
+          if grep -n '\${' Sift.xcodeproj/project.pbxproj; then
             echo "::warning::XcodeGen left a literal \${...} in the project."; fi
 
       - name: Check altool
@@ -37,7 +37,7 @@ jobs:
       - name: Build for simulator (unsigned)
         run: |
           set -o pipefail
-          xcodebuild -project SwipeApp.xcodeproj -scheme SwipeApp -configuration Debug \
+          xcodebuild -project Sift.xcodeproj -scheme Sift -configuration Debug \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
             PROVISIONING_PROFILE_SPECIFIER="" DEVELOPMENT_TEAM="" build > "$RUNNER_TEMP/xcodebuild.log" 2>&1 || {

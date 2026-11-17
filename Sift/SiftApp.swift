@@ -3,7 +3,7 @@ import Photos
 import SwiftUI
 
 @main
-struct SwipeApp: App {
+struct SiftApp: App {
     @State private var library = Library()
     @Environment(\.scenePhase) private var scenePhase
 

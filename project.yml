@@ -1,6 +1,6 @@
 # App identity lives here only: PRODUCT_BUNDLE_IDENTIFIER, APP_DISPLAY_NAME, MARKETING_VERSION.
 # ${APPLE_TEAM_ID}, ${APP_PROFILE_NAME} and ${BUILD_NUMBER} are expanded by XcodeGen from the CI environment.
-name: SwipeApp
+name: Sift
 options:
   deploymentTarget:
     iOS: "17.0"
@@ -16,17 +16,17 @@ settings:
     CURRENT_PROJECT_VERSION: "${BUILD_NUMBER}"
 
 targets:
-  SwipeApp:
+  Sift:
     type: application
     platform: iOS
     sources:
-      - path: SwipeApp
+      - path: Sift
       - path: Support/PrivacyInfo.xcprivacy
         buildPhase: resources
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.example.swipeapp
-        APP_DISPLAY_NAME: SwipeApp
+        PRODUCT_BUNDLE_IDENTIFIER: com.lucaskang.sift
+        APP_DISPLAY_NAME: Sift
         INFOPLIST_FILE: Support/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         TARGETED_DEVICE_FAMILY: "1"
@@ -40,10 +40,10 @@ targets:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
 
 schemes:
-  SwipeApp:
+  Sift:
     build:
       targets:
-        SwipeApp: all
+        Sift: all
     run:
       config: Debug
     archive:
