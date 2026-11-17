@@ -160,9 +160,9 @@ final class Library {
                     PHAssetChangeRequest.deleteAssets(request)
                 }
             } catch {
-                let error = error as NSError
-                if !(error.domain == PHPhotosErrorDomain && error.code == PHPhotosError.Code.userCancelled.rawValue) {
-                    deleteError = error.localizedDescription
+                let failure = error as NSError
+                if !(failure.domain == PHPhotosErrorDomain && failure.code == PHPhotosError.Code.userCancelled.rawValue) {
+                    deleteError = failure.localizedDescription
                 }
                 return
             }
