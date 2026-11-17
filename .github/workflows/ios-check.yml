@@ -1,0 +1,45 @@
+name: iOS compile check
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: macos-26
+    timeout-minutes: 30
+    env:
+      APPLE_TEAM_ID: UNSIGNED
+      APP_PROFILE_NAME: UNSIGNED
+      BUILD_NUMBER: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.6.app
+          xcodebuild -version
+
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate --spec project.yml
+
+      - name: Build for simulator (unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild -project SwipeApp.xcodeproj -scheme SwipeApp -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build > "$RUNNER_TEMP/xcodebuild.log" 2>&1 || {
+              echo "::group::xcodebuild errors"
+              grep -E "(error|fatal error):" "$RUNNER_TEMP/xcodebuild.log" | sort -u | head -80
+              echo "::endgroup::"
+              echo "::group::last 60 lines"; tail -60 "$RUNNER_TEMP/xcodebuild.log"; echo "::endgroup::"
+              exit 65; }
+          grep -E "warning:" "$RUNNER_TEMP/xcodebuild.log" | sort -u | head -40 || true
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-check-log
+          path: ${{ runner.temp }}/xcodebuild.log
+          retention-days: 7
