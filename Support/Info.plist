@@ -26,6 +26,11 @@
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>$(APP_DISPLAY_NAME) shows your photos one at a time so you can choose which to keep and which to delete.</string>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+	</dict>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UIRequiredDeviceCapabilities</key>
